@@ -7,14 +7,14 @@ camera = cv2.VideoCapture(0)
 
 
 def generate_frame():
-    _, frame = camera.read()
     while True:
+        _, frame = camera.read()
         if not _:
             break
         else:
             ret, buffer = cv2.imencode('.jpg', frame)
             frame = buffer.tobytes()
-        yield b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
+            yield b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n'
 
 
 @app.route('/')
