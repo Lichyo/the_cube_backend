@@ -1,9 +1,8 @@
-from flask import Flask, render_template, request, Response
+from flask import Flask
 from flask_socketio import SocketIO, send
 import base64
 from io import BytesIO
-from PIL import Image
-import cv2
+from PIL import Image, ImageDraw, ImageFont
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -11,36 +10,12 @@ socketio = SocketIO(app, cors_allowed_origins='*')
 image_path = 'image.jpeg'
 
 
-def generate_frame():
-    while True:
-        _, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-
-# @app.route('/latest_image')
-# def latest_image():
-    # return send_file(image_path, mimetype='image/jpeg')
-
-
-@app.route('/video')
-def video():
-    return Response(generate_frame(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-
 @socketio.on('receive_image')
 def handle_message(msg):
     try:
-        # print('Receiving image')
         with open(image_path, 'rb') as f:
             encoded_image = base64.b64encode(f.read()).decode('utf-8')
-        send(encoded_image)
+        socketio.emit('receive_image', encoded_image)
         print('Image sent')
 
     except Exception as e:
@@ -51,8 +26,19 @@ def handle_message(msg):
 def handle_message(msg):
     try:
         image = Image.open(BytesIO(base64.b64decode(msg)))
+
+        # Add text to the top-right corner
+        draw = ImageDraw.Draw(image)
+        font = ImageFont.load_default(size=20)
+        text = "Cy_Cube"
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        # text_height = bbox[3] - bbox[1]
+        position = (image.width - text_width - 10, 10)
+        draw.text(position, text, font=font, fill="white")
+
         image.save(image_path)
-        socketio.emit('image_saved')
+        socketio.emit('save_image', 'image_saved')
 
     except Exception as e:
         print(f"Error: {e}")
