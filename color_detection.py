@@ -19,10 +19,11 @@ def process_image(img, color):
 
     for contour in contours:
         area = cv2.contourArea(contour)
-        # color = get_outline_color(color)
-        if 4000 > area > 3000:
+        if area > 4300:
+            print(area)
             x, y, w, h = cv2.boundingRect(contour)  # 取得座標與長寬尺寸
             img = cv2.rectangle(img, (x, y), (x + w, y + h), color, 3)  # 繪製四邊形
+    print('Done')
     return img
 
 

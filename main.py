@@ -12,12 +12,13 @@ while True:
         break
 
     img = cv2.resize(img, (640, 360))
+    img = cv2.flip(img, 1)
     img = cd.process_image(img=img, color=cd.orange)
-    img = cd.process_image(img=img, color=cd.red)
-    img = cd.process_image(img=img, color=cd.yellow)
-    img = cd.process_image(img=img, color=cd.white)
-    img = cd.process_image(img=img, color=cd.blue)
-    img = cd.process_image(img=img, color=cd.green)
+    # img = cd.process_image(img=img, color=cd.red)
+    # img = cd.process_image(img=img, color=cd.yellow)
+    # img = cd.process_image(img=img, color=cd.white)
+    # img = cd.process_image(img=img, color=cd.blue)
+    # img = cd.process_image(img=img, color=cd.green)
 
     cv2.imshow('cube', img)
     if cv2.waitKey(1) == ord('q'):
