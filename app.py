@@ -35,6 +35,7 @@ def handle_save_image(msg):
                                               scan_area=scan_area, records=records)
         print('Image processed : \n')
         print(records)
+        socketio.emit('return_cube_color', records)
         image = Image.fromarray(image)
         image.save(image_path)
     except Exception as e:

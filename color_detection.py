@@ -2,12 +2,12 @@ import numpy as np
 import cv2
 from PIL import ImageDraw, ImageFont
 
-orange = [38, 112, 230]  # ok
-red = [17, 15, 164]  # ok
-white = [180, 180, 180]  # ok
+orange = [38, 130, 230]  # ok  252,161,31,
+red = [30, 30, 180]  # ok
+white = [195, 210, 200]  # ok
 yellow = [35, 185, 157]  # ok
-blue = [149, 71, 11]  # ok
-green = [10, 145, 10]  # ok
+blue = [180, 110, 11]  # ok  3,119,202
+green = [10, 187, 10]  # ok
 color_list = ['orange', 'red', 'white', 'yellow', 'blue', 'green']
 
 
