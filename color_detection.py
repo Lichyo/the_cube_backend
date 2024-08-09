@@ -4,16 +4,34 @@ from PIL import ImageDraw, ImageFont
 
 orange = [38, 112, 230]  # ok
 red = [17, 15, 164]  # ok
-white = [181, 193, 183]  # ok
+white = [180, 180, 180]  # ok
 yellow = [35, 185, 157]  # ok
 blue = [149, 71, 11]  # ok
 green = [10, 145, 10]  # ok
-color_list = [white, yellow, orange, red, blue, green]
+color_list = ['orange', 'red', 'white', 'yellow', 'blue', 'green']
+
+
+def get_color(color):
+    if color == 'orange':
+        return orange
+    elif color == 'red':
+        return red
+    elif color == 'white':
+        return white
+    elif color == 'yellow':
+        return yellow
+    elif color == 'blue':
+        return blue
+    elif color == 'green':
+        return green
+    else:
+        return [0, 0, 0]
 
 
 def process_image(image, color, section_width, scan_area, records):
     image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-    lower, upper = get_color_range(color)
+    color_in_bgr = get_color(color)
+    lower, upper = get_color_range(color_in_bgr)
     output = cv2.inRange(image, lower, upper)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
     output = cv2.dilate(output, kernel)
@@ -23,15 +41,12 @@ def process_image(image, color, section_width, scan_area, records):
     for contour in contours:
         area = cv2.contourArea(contour)
         if (section_width * section_width * 0.7) < area:
-            x, y, w, h = cv2.boundingRect(contour)  # 取得座標與長寬尺寸
-            print('x:', x, 'y:', y, 'w:', w, 'h:', h, 'area:', area)
-            # image = cv2.drawContours(image, contours, -1, color, thickness=3)
             points = find_section_range(scan_area, section_width)
             for i in range(0, 9):
                 x, y = points[i]
                 if cv2.pointPolygonTest(contour, (x, y), False) >= 0:
                     cv2.circle(image, (x, y), 5, [0, 0, 0], -1)
-                    records[i] = True
+                    records[i] = color
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return image, records
 
@@ -95,12 +110,12 @@ def draw_banner(image):
 
 def find_section_range(scan_area, section_width):
     start_x, start_y, end_x, end_y = scan_area
-    offset_x = (start_x + section_width // 2)
+    offset_x = (end_x - section_width // 2)
     offset_y = (end_y - section_width // 2)
     records = []
     for i in range(0, 3):
         for j in range(0, 3):
-            x = offset_x + j * section_width
+            x = offset_x - j * section_width
             y = offset_y - i * section_width
             records.append((x, y))
     return records

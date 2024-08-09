@@ -30,12 +30,11 @@ def handle_save_image(msg):
         records = []
         for i in range(9):
             records.append(False)
-        counter = 0
         for color in cd.color_list:
-            print(f'section {counter}')
             image, records = cd.process_image(image=image, color=color, section_width=section_width,
                                               scan_area=scan_area, records=records)
-            counter += 1
+        print('Image processed : \n')
+        print(records)
         image = Image.fromarray(image)
         image.save(image_path)
     except Exception as e:
