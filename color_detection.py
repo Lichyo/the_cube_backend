@@ -2,12 +2,12 @@ import numpy as np
 import cv2
 from PIL import ImageDraw, ImageFont
 
-orange = [38, 130, 230]  # ok  252,161,31,
-red = [30, 30, 180]  # ok
-white = [195, 210, 200]  # ok
-yellow = [35, 185, 157]  # ok
-blue = [180, 110, 11]  # ok  3,119,202
-green = [10, 187, 10]  # ok
+orange = [44, 139, 255]  # rgba(252,133,29,255)
+red = [50, 50, 185]  # rgba(160,36,24,255)
+white = [188, 168, 157]  # rgba(191,221,231,255)
+yellow = [72, 188, 118]  # rgba(197,240,73,255)
+blue = [220, 112, 40]  # rgba(40,112,220,255)
+green = [121, 213, 30]  # rgba(25,185,75,255)
 color_list = ['orange', 'red', 'white', 'yellow', 'blue', 'green']
 
 
@@ -28,7 +28,15 @@ def get_color(color):
         return [0, 0, 0]
 
 
-def process_image(image, color, section_width, scan_area, records):
+def process_image(image, color, section_width, scan_area, records, brightness=0, contrast=0):
+    if color == 'white' or color == 'yellow' or color == 'orange':
+        brightness -= 3
+    else:
+        brightness += 3
+    output = image * (contrast / 127 + 1) - contrast + brightness  # 轉換公式
+    output = np.clip(output, 0, 255)
+    image = np.uint8(output)
+
     image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
     color_in_bgr = get_color(color)
     lower, upper = get_color_range(color_in_bgr)
@@ -114,7 +122,7 @@ def find_section_range(scan_area, section_width):
     offset_y = (end_y - section_width // 2)
     records = []
     for i in range(0, 3):
-        for j in range(0, 3):
+        for j in range(2, -1, -1):
             x = offset_x - j * section_width
             y = offset_y - i * section_width
             records.append((x, y))

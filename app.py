@@ -22,9 +22,10 @@ def handle_receive_image(msg):
 
 
 @socketio.on('save_image')
-def handle_save_image(msg):
+def handle_save_image(image, brightness, contrast):
     try:
-        image = Image.open(BytesIO(base64.b64decode(msg)))
+        print('Saving image...')
+        image = Image.open(BytesIO(base64.b64decode(image)))
         image = cd.draw_banner(image)
         image, section_width, scan_area = cd.draw_3x3_grid(image)
         records = []
@@ -32,8 +33,8 @@ def handle_save_image(msg):
             records.append(False)
         for color in cd.color_list:
             image, records = cd.process_image(image=image, color=color, section_width=section_width,
-                                              scan_area=scan_area, records=records)
-        print('Image processed : \n')
+                                              scan_area=scan_area, records=records, brightness=brightness,
+                                              contrast=contrast)
         print(records)
         socketio.emit('return_cube_color', records)
         image = Image.fromarray(image)
