@@ -2,12 +2,12 @@ import numpy as np
 import cv2
 from PIL import ImageDraw, ImageFont
 
-orange = [44, 139, 255]  # rgba(252,133,29,255)
-red = [50, 50, 185]  # rgba(160,36,24,255)
-white = [188, 168, 157]  # rgba(191,221,231,255)
-yellow = [72, 188, 118]  # rgba(197,240,73,255)
-blue = [220, 112, 40]  # rgba(40,112,220,255)
-green = [121, 213, 30]  # rgba(25,185,75,255)
+orange = [38, 112, 230]  # ok
+red = [17, 15, 164]  # ok
+white = [180, 180, 180]  # ok
+yellow = [35, 185, 157]  # ok
+blue = [149, 71, 11]  # ok
+green = [10, 145, 10]  # ok
 color_list = ['orange', 'red', 'white', 'yellow', 'blue', 'green']
 
 
@@ -29,10 +29,10 @@ def get_color(color):
 
 
 def process_image(image, color, section_width, scan_area, records, brightness=0, contrast=0):
-    if color == 'white' or color == 'yellow' or color == 'orange':
-        brightness -= 3
-    else:
-        brightness += 3
+    if color == 'blue' or color == 'green':
+        brightness -= 20
+    # else:
+    #     brightness += 3
     output = image * (contrast / 127 + 1) - contrast + brightness  # 轉換公式
     output = np.clip(output, 0, 255)
     image = np.uint8(output)
