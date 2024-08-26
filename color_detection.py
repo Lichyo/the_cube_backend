@@ -1,14 +1,36 @@
 import numpy as np
 import cv2
 from PIL import ImageDraw, ImageFont
+import json
 
-orange = [38, 112, 230]  # ok
-red = [17, 15, 164]  # ok
-white = [180, 180, 180]  # ok
-yellow = [35, 185, 157]  # ok
-blue = [149, 71, 11]  # ok
-green = [10, 145, 10]  # ok
+# HSV values for the specified colors
+white = [0, 0, 255]
+yellow = [30, 255, 255]
+red = [0, 255, 255]
+orange = [15, 255, 255]
+blue = [120, 255, 255]
+green = [60, 255, 255]
 color_list = ['orange', 'red', 'white', 'yellow', 'blue', 'green']
+
+
+def init_user_define_colors(user):
+    global white
+    global yellow
+    global red
+    global orange
+    global blue
+    global green
+    with open(f'user_define_colors/{user}.json', 'r') as f:
+        user_define_colors = json.load(f)
+        colors = user_define_colors['colors']
+        white = colors["white"]
+        yellow = colors["yellow"]
+        red = colors["red"]
+        orange = colors["orange"]
+        blue = colors["blue"]
+        green = colors["green"]
+        for color in color_list:
+            print(f"{color}: {get_color(color)}")
 
 
 def get_color(color):
@@ -28,57 +50,46 @@ def get_color(color):
         return [0, 0, 0]
 
 
-def process_image(image, color, section_width, scan_area, records, brightness=0, contrast=0):
-    if color == 'blue' or color == 'green':
-        brightness -= 20
-    # else:
-    #     brightness += 3
-    output = image * (contrast / 127 + 1) - contrast + brightness  # 轉換公式
-    output = np.clip(output, 0, 255)
-    image = np.uint8(output)
+def get_color_range(hsv):
+    lower = []
+    upper = []
+    color_range = 30
+    for i in range(3):
+        lower.append(max(hsv[i] - color_range, 0))
+        upper.append(min(hsv[i] + color_range, 255))
+    return np.array(lower), np.array(upper)
 
-    image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-    color_in_bgr = get_color(color)
-    lower, upper = get_color_range(color_in_bgr)
+
+def process_image(image, color, section_width, scan_area, records):
+    image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2HSV)
+    color_in_hsv = get_color(color)
+    lower, upper = get_color_range(color_in_hsv)
     output = cv2.inRange(image, lower, upper)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
     output = cv2.dilate(output, kernel)
     output = cv2.erode(output, kernel)
     contours, hierarchy = cv2.findContours(output, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+    points = find_section_range(scan_area, section_width)
+    # for i in range(0, 9):
+    #     x, y = points[i]
+    #     print(f"Checking point: {i} : HSV: {image[y, x]}")
+    # print('-------------------')
+
     for contour in contours:
         area = cv2.contourArea(contour)
         if (section_width * section_width * 0.7) < area:
-            points = find_section_range(scan_area, section_width)
             for i in range(0, 9):
                 x, y = points[i]
                 if cv2.pointPolygonTest(contour, (x, y), False) >= 0:
                     cv2.circle(image, (x, y), 5, [0, 0, 0], -1)
                     records[i] = color
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
     return image, records
 
 
-def get_color_range(bgr):
-    lower = []
-    upper = []
-    for i in range(3):
-        if bgr[i] - 40 > 0:
-            lower.append(bgr[i] - 40)
-        else:
-            lower.append(0)
-    for i in range(3):
-        if bgr[i] + 40 < 255:
-            upper.append(bgr[i] + 40)
-        else:
-            upper.append(255)
-    lower = np.array(lower)
-    upper = np.array(upper)
-    return lower, upper
-
-
 def draw_3x3_grid(image):
-    image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+    image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2HSV)
     height, width, _ = image.shape
 
     color = (0, 0, 0)
@@ -100,9 +111,10 @@ def draw_3x3_grid(image):
         y = start_y + i * section_height
         cv2.line(image, (start_x, y), (end_x, y), color, thickness)
 
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
     scan_area = (start_x, start_y, end_x, end_y)
-    return image, section_width, scan_area
+    center_points = (int(start_x + 1.5 * section_width), int(start_y + 1.5 * section_height))
+    return image, section_width, scan_area, center_points
 
 
 def draw_banner(image):
@@ -127,3 +139,9 @@ def find_section_range(scan_area, section_width):
             y = offset_y - i * section_width
             records.append((x, y))
     return records
+
+
+def get_center_color_hsv(image, center_points):
+    image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2HSV)
+    x, y = center_points
+    return image[y, x]
