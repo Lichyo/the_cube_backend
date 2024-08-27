@@ -4,87 +4,50 @@ from PIL import ImageDraw, ImageFont
 import json
 
 # HSV values for the specified colors
-white = [0, 0, 255]
-yellow = [30, 255, 255]
-red = [0, 255, 255]
-orange = [15, 255, 255]
-blue = [120, 255, 255]
-green = [60, 255, 255]
 color_list = ['orange', 'red', 'white', 'yellow', 'blue', 'green']
 
 
-def init_user_define_colors(user):
-    global white
-    global yellow
-    global red
-    global orange
-    global blue
-    global green
+def get_user_define_colors(user):
     with open(f'user_define_colors/{user}.json', 'r') as f:
         user_define_colors = json.load(f)
-        colors = user_define_colors['colors']
-        white = colors["white"]
-        yellow = colors["yellow"]
-        red = colors["red"]
-        orange = colors["orange"]
-        blue = colors["blue"]
-        green = colors["green"]
-        for color in color_list:
-            print(f"{color}: {get_color(color)}")
+        return user_define_colors
 
 
-def get_color(color):
-    if color == 'orange':
-        return orange
-    elif color == 'red':
-        return red
-    elif color == 'white':
-        return white
-    elif color == 'yellow':
-        return yellow
-    elif color == 'blue':
-        return blue
-    elif color == 'green':
-        return green
-    else:
-        return [0, 0, 0]
-
-
-def get_color_range(hsv):
+def get_color_range(rgb):
     lower = []
     upper = []
-    color_range = 30
+    color_range = 20
     for i in range(3):
-        lower.append(max(hsv[i] - color_range, 0))
-        upper.append(min(hsv[i] + color_range, 255))
+        lower.append(max(rgb[i] - color_range, 0))
+        upper.append(min(rgb[i] + color_range, 255))
     return np.array(lower), np.array(upper)
 
 
 def process_image(image, color, section_width, scan_area, records):
-    image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2HSV)
-    color_in_hsv = get_color(color)
-    lower, upper = get_color_range(color_in_hsv)
-    output = cv2.inRange(image, lower, upper)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
-    output = cv2.dilate(output, kernel)
-    output = cv2.erode(output, kernel)
-    contours, hierarchy = cv2.findContours(output, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    image = cv2.GaussianBlur(np.array(image), (5, 5), 0)
+    user_define_colors = get_user_define_colors('chiyu')
+    user_define_colors = user_define_colors["colors"]
+    image = np.array(image)
 
     points = find_section_range(scan_area, section_width)
-    # for i in range(0, 9):
-    #     x, y = points[i]
-    #     print(f"Checking point: {i} : HSV: {image[y, x]}")
-    # print('-------------------')
+    for i in range(0, 9):
+        x, y = points[i]
+        contrast = 0
+        brightness = 10 - i // 3 * 8
+        output = image * (contrast / 127 + 1) - contrast + brightness  # 轉換公式
+        output = np.clip(output, 0, 255)
+        image = np.uint8(output)
 
-    for contour in contours:
-        area = cv2.contourArea(contour)
-        if (section_width * section_width * 0.7) < area:
-            for i in range(0, 9):
-                x, y = points[i]
-                if cv2.pointPolygonTest(contour, (x, y), False) >= 0:
-                    cv2.circle(image, (x, y), 5, [0, 0, 0], -1)
-                    records[i] = color
-    image = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
+        color_in_rgb = user_define_colors[color]
+        lower, upper = get_color_range(color_in_rgb)
+        output = cv2.inRange(image, lower, upper)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
+        output = cv2.dilate(output, kernel)
+        output = cv2.erode(output, kernel)
+        contours, hierarchy = cv2.findContours(output, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for contour in contours:
+            if cv2.pointPolygonTest(contour, (x, y), False) >= 0:
+                records[i] = color
     return image, records
 
 
@@ -141,7 +104,7 @@ def find_section_range(scan_area, section_width):
     return records
 
 
-def get_center_color_hsv(image, center_points):
-    image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2HSV)
+def get_center_color_rgb(image, center_points):
+    image = np.array(image)
     x, y = center_points
     return image[y, x]

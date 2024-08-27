@@ -50,6 +50,7 @@ def handle_save_image(image):
         image = Image.open(BytesIO(base64.b64decode(image)))
         image = cd.draw_banner(image)
         image, section_width, scan_area, center_points = cd.draw_3x3_grid(image)
+
         image = Image.fromarray(image)
         image.save(image_path)
 
@@ -59,23 +60,31 @@ def handle_save_image(image):
 
 @socketio.on('initialize_cube_color')
 def handle_initialize_cube_color():
-    image = Image.open(image_path)
-    records = []
-    for i in range(9):
-        records.append(False)
-    for color in cd.color_list:
-        image, records = cd.process_image(image=image, color=color, section_width=section_width,
-                                          scan_area=scan_area, records=records)
-    if not (False in records):
+    try:
+        image = Image.open(image_path)
+        records = []
+        for i in range(9):
+            records.append(False)
+        for color in cd.color_list:
+            image, records = cd.process_image(image=image, color=color, section_width=section_width,
+                                              scan_area=scan_area, records=records)
         print(records)
-    socketio.emit('return_cube_color', records)
+        socketio.emit('return_cube_color', records)
+    except Exception as e:
+        print(f"Error: {e}")
 
 
 @socketio.on('initialize_user_define_cube_color')
 def handle_initialize_user_define_cube_color(color):
     image = Image.open(image_path)
-    cd.get_center_color_hsv(image, center_points)
-    user_define_colors[color] = cd.get_center_color_hsv(image, center_points)
+    points = cd.find_section_range(scan_area, section_width)
+    array = []
+    for i in range(0, 9):
+        x, y = points[i]
+        center_color = cd.get_center_color_rgb(image, (x, y))
+        array.append(center_color)
+    mean = np.mean(array, axis=0).astype(int)
+    user_define_colors[color] = mean
     print_user_define_colors()
     flag = True
     for key, value in user_define_colors.items():
@@ -88,13 +97,7 @@ def handle_initialize_user_define_cube_color(color):
         with open(f'user_define_colors/{user}.json', 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
             f.flush()
-        cd.init_user_define_colors(user)
-        socketio.emit('initialize_user _define_cube_color', "success")
-
-
-@socketio.on('get_user_define_colors')
-def handle_get_user_define_colors():
-    cd.init_user_define_colors(user)
+        socketio.emit('initialize_user_define_cube_color', "success")
 
 
 @socketio.on('connect')
