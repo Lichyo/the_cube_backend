@@ -5,11 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b4337f9c-0b67-4cca-94e1-0ae361a76dc3" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/user_define_colors/chiyu.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/color_detection.py" beforeDir="false" afterPath="$PROJECT_DIR$/color_detection.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/images/chiyu.jpeg" beforeDir="false" afterPath="$PROJECT_DIR$/images/chiyu.jpeg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user_define_colors/chiyu.json" beforeDir="false" afterPath="$PROJECT_DIR$/user_define_colors/chiyu.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

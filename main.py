@@ -13,7 +13,7 @@ while True:
 
     img = cv2.resize(img, (640, 360))
     img = cv2.flip(img, 1)
-    img = cd.process_image(image=img, color=cd.orange)
+    img = cd.predict_color(image=img, color=cd.orange)
     # img = cd.process_image(img=img, color=cd.red)
     # img = cd.process_image(img=img, color=cd.yellow)
     # img = cd.process_image(img=img, color=cd.white)
