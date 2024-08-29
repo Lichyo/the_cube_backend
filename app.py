@@ -4,6 +4,7 @@ import base64
 from io import BytesIO
 from PIL import Image
 import color_detection as cd
+import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -74,6 +75,7 @@ def handle_join(user_info):
     global image_path
     user = user_info
     image_path = f"images/{user}.jpeg"
+    # cd.clear_color_dataset(user)
 
 
 @socketio.on('disconnect')

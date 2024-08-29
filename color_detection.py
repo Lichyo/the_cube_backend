@@ -11,15 +11,18 @@ color_list = ['orange', 'red', 'white', 'yellow', 'blue', 'green']
 
 
 def predict_color(image, section_width, scan_area, user):
+    image = np.array(image)
     points = find_center_points(scan_area, section_width)
     classifier, acc = get_classifier(user)
-    print(f"""Accuracy: {acc}""")
+    # print(f"""Accuracy: {acc}""")
     records = []
     for i in range(0, 9):
         x, y = points[i]
         source = image[y, x]
-        color = classifier.predict([source])
-        records.append(color)
+        color = classifier.predict(np.array(source).reshape(1, -1))
+        # print(f"predicted color {i}:  {color}")
+        records.append(f"{color[0]}")
+    print(records)
     return records
 
 
@@ -29,10 +32,6 @@ def get_classifier(user):
     y = data.iloc[:, -1].values
 
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
-    sc_x = StandardScaler()
-
-    x_train = sc_x.fit_transform(x_train)
-    x_test = sc_x.transform(x_test)
 
     classifier = SVC(kernel='rbf')
     classifier.fit(x_train, y_train)
@@ -63,6 +62,17 @@ def init_color_dataset(user, color, image, section_width, scan_area):
     # Save updated data to CSV
     updated_df.to_csv(file_path, index=False)
     print(f"Dataset for {user} has been updated")
+
+
+def clear_color_dataset(user):
+    file_path = f'user_define_colors/{user}.csv'
+    try:
+        existing_df = pd.read_csv(file_path)
+        existing_df.drop(existing_df.index, inplace=True)
+        existing_df.to_csv(file_path, index=False)
+        print(f"Dataset for {user} has been cleared")
+    except FileNotFoundError:
+        print(f"Dataset for {user} is empty")
 
 
 def draw_3x3_grid(image):
@@ -106,12 +116,12 @@ def draw_banner(image):
 
 def find_center_points(scan_area, section_width):
     start_x, start_y, end_x, end_y = scan_area
-    offset_x = (end_x - section_width // 2)
+    offset_x = (start_x + section_width // 2)
     offset_y = (end_y - section_width // 2)
     records = []
     for i in range(0, 3):
         for j in range(0, 3):
-            x = offset_x - j * section_width
+            x = offset_x + j * section_width
             y = offset_y - i * section_width
             records.append((x, y))
     return records
