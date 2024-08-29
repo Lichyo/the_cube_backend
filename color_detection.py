@@ -14,13 +14,11 @@ def predict_color(image, section_width, scan_area, user):
     image = np.array(image)
     points = find_center_points(scan_area, section_width)
     classifier, acc = get_classifier(user)
-    # print(f"""Accuracy: {acc}""")
     records = []
     for i in range(0, 9):
         x, y = points[i]
         source = image[y, x]
         color = classifier.predict(np.array(source).reshape(1, -1))
-        # print(f"predicted color {i}:  {color}")
         records.append(f"{color[0]}")
     print(records)
     return records
@@ -53,13 +51,8 @@ def init_color_dataset(user, color, image, section_width, scan_area):
         source = image[y, x]
         colors.append((source[0], source[1], source[2], color))
 
-    # Create new DataFrame
     new_df = pd.DataFrame(colors, columns=['R', 'G', 'B', 'Color'])
-
-    # Append new data to existing data
     updated_df = pd.concat([existing_df, new_df], ignore_index=True)
-
-    # Save updated data to CSV
     updated_df.to_csv(file_path, index=False)
     print(f"Dataset for {user} has been updated")
 
