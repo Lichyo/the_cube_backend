@@ -13,12 +13,14 @@ color_list = ['orange', 'red', 'white', 'yellow', 'blue', 'green']
 def predict_color(image, section_width, scan_area, user):
     image = np.array(image)
     points = find_center_points(scan_area, section_width)
-    classifier, acc = get_classifier(user)
+    classifier, sc_x = get_classifier(user)
     records = []
     for i in range(0, 9):
         x, y = points[i]
         source = image[y, x]
-        color = classifier.predict(np.array(source).reshape(1, -1))
+        source = np.array(source).reshape(1, -1)
+        source = sc_x.transform(source)
+        color = classifier.predict(source)
         records.append(f"{color[0]}")
     print(records)
     return records
@@ -30,10 +32,11 @@ def get_classifier(user):
     y = data.iloc[:, -1].values
 
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
-
+    sc_x = StandardScaler()
+    x_train = sc_x.fit_transform(x_train)
     classifier = SVC(kernel='rbf')
     classifier.fit(x_train, y_train)
-    return classifier, accuracy_score(y_test, classifier.predict(x_test))
+    return classifier, sc_x
 
 
 def init_color_dataset(user, color, image, section_width, scan_area):
