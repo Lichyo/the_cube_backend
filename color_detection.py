@@ -1,72 +1,74 @@
 import numpy as np
 import cv2
 from PIL import ImageDraw, ImageFont
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
 
-orange = [38, 112, 230]  # ok
-red = [17, 15, 164]  # ok
-white = [180, 180, 180]  # ok
-yellow = [35, 185, 157]  # ok
-blue = [149, 71, 11]  # ok
-green = [10, 145, 10]  # ok
 color_list = ['orange', 'red', 'white', 'yellow', 'blue', 'green']
 
 
-def get_color(color):
-    if color == 'orange':
-        return orange
-    elif color == 'red':
-        return red
-    elif color == 'white':
-        return white
-    elif color == 'yellow':
-        return yellow
-    elif color == 'blue':
-        return blue
-    elif color == 'green':
-        return green
-    else:
-        return [0, 0, 0]
+def predict_color(image, section_width, scan_area, user):
+    image = np.array(image)
+    points = find_center_points(scan_area, section_width)
+    classifier, sc_x = get_classifier(user)
+    records = []
+    for i in range(0, 9):
+        x, y = points[i]
+        source = image[y, x]
+        source = np.array(source).reshape(1, -1)
+        source = sc_x.transform(source)
+        color = classifier.predict(source)
+        records.append(f"{color[0]}")
+    print(records)
+    return records
 
 
-def process_image(image, color, section_width, scan_area, records):
-    image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-    color_in_bgr = get_color(color)
-    lower, upper = get_color_range(color_in_bgr)
-    output = cv2.inRange(image, lower, upper)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
-    output = cv2.dilate(output, kernel)
-    output = cv2.erode(output, kernel)
-    contours, hierarchy = cv2.findContours(output, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+def get_classifier(user):
+    data = pd.read_csv('user_define_colors/' + user + '.csv')
+    x = data.iloc[:, :-1].values
+    y = data.iloc[:, -1].values
 
-    for contour in contours:
-        area = cv2.contourArea(contour)
-        if (section_width * section_width * 0.7) < area:
-            points = find_section_range(scan_area, section_width)
-            for i in range(0, 9):
-                x, y = points[i]
-                if cv2.pointPolygonTest(contour, (x, y), False) >= 0:
-                    cv2.circle(image, (x, y), 5, [0, 0, 0], -1)
-                    records[i] = color
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    return image, records
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+    sc_x = StandardScaler()
+    x_train = sc_x.fit_transform(x_train)
+    classifier = SVC(kernel='rbf')
+    classifier.fit(x_train, y_train)
+    return classifier, sc_x
 
 
-def get_color_range(bgr):
-    lower = []
-    upper = []
-    for i in range(3):
-        if bgr[i] - 40 > 0:
-            lower.append(bgr[i] - 40)
-        else:
-            lower.append(0)
-    for i in range(3):
-        if bgr[i] + 40 < 255:
-            upper.append(bgr[i] + 40)
-        else:
-            upper.append(255)
-    lower = np.array(lower)
-    upper = np.array(upper)
-    return lower, upper
+def init_color_dataset(user, color, image, section_width, scan_area):
+    image = np.array(image)
+    points = find_center_points(scan_area, section_width)
+    colors = []
+
+    file_path = f'user_define_colors/{user}.csv'
+    try:
+        existing_df = pd.read_csv(file_path)
+    except FileNotFoundError:
+        existing_df = pd.DataFrame(columns=['R', 'G', 'B', 'Color'])
+
+    for (x, y) in points:
+        source = image[y, x]
+        colors.append((source[0], source[1], source[2], color))
+
+    new_df = pd.DataFrame(colors, columns=['R', 'G', 'B', 'Color'])
+    updated_df = pd.concat([existing_df, new_df], ignore_index=True)
+    updated_df.to_csv(file_path, index=False)
+    print(f"Dataset for {user} has been updated")
+
+
+def clear_color_dataset(user):
+    file_path = f'user_define_colors/{user}.csv'
+    try:
+        existing_df = pd.read_csv(file_path)
+        existing_df.drop(existing_df.index, inplace=True)
+        existing_df.to_csv(file_path, index=False)
+        print(f"Dataset for {user} has been cleared")
+    except FileNotFoundError:
+        print(f"Dataset for {user} is empty")
 
 
 def draw_3x3_grid(image):
@@ -108,14 +110,14 @@ def draw_banner(image):
     return image
 
 
-def find_section_range(scan_area, section_width):
+def find_center_points(scan_area, section_width):
     start_x, start_y, end_x, end_y = scan_area
-    offset_x = (end_x - section_width // 2)
+    offset_x = (start_x + section_width // 2)
     offset_y = (end_y - section_width // 2)
     records = []
     for i in range(0, 3):
         for j in range(0, 3):
-            x = offset_x - j * section_width
+            x = offset_x + j * section_width
             y = offset_y - i * section_width
             records.append((x, y))
     return records
