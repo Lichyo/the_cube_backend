@@ -31,11 +31,12 @@ def get_classifier(user):
     x = data.iloc[:, :-1].values
     y = data.iloc[:, -1].values
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
     sc_x = StandardScaler()
     x_train = sc_x.fit_transform(x_train)
     classifier = SVC(kernel='rbf')
     classifier.fit(x_train, y_train)
+    print(f"Accuracy: {accuracy_score(y_test, classifier.predict(sc_x.transform(x_test)))}")
     return classifier, sc_x
 
 
