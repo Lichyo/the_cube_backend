@@ -1,8 +1,6 @@
 import numpy as np
 
-
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "utils")))
-# import data_set_2hands
+# from numba import jit
 
 
 class DataOrganizer:
@@ -10,14 +8,50 @@ class DataOrganizer:
         npArray = npArray[:, 1:, :]
         return npArray
 
+    def removePalmNode(self, inputList):
+        palm = [
+            0,
+            1,
+            2,
+            3,
+            10,
+            11,
+            18,
+            19,
+            26,
+            27,
+            34,
+            35,
+            42,
+            43,
+            44,
+            45,
+            52,
+            53,
+            60,
+            61,
+            68,
+            69,
+            76,
+            77,
+        ]
+        inputList = np.delete(inputList, palm, axis=2)  # 刪除對應的索引(in features)
+        return inputList
+
+    # @staticmethod
+    # @jit(nopython=True)
     def preprocessingData(self, inputList):
+
         inputList = np.array(inputList)
         inputList = self.normalizedWithEachTimeSteps(inputList)
         # inputList = self.getRelativeWithFirstTimeStep(inputList)
         inputList = self.getRelativeLocation(inputList)
+        inputList = self.removePalmNode(inputList)
         return inputList
 
-    def getRelativeLocation(self, npArray):  # 輸入:(data number,time step, features)
+    @staticmethod
+    # @jit(nopython=True)
+    def getRelativeLocation(npArray):  # 輸入:(data number,time step, features)
         for i in range(len(npArray)):
             for j in range(len(npArray[i])):
                 originX = npArray[i][j][0]
@@ -29,14 +63,16 @@ class DataOrganizer:
                         npArray[i][j][k] = npArray[i][j][k] - originY
         return npArray
 
+    @staticmethod
+    # @jit(nopython=True)
     def normalizedWithEachTimeSteps(
-            self, inputList
+        inputList,
     ):  # 輸入:(data number,time step, features)
 
         for i in range(len(inputList)):
             for j in range(inputList.shape[1]):
                 inputList[i, j] = (inputList[i, j] - inputList[i, j].min()) / (
-                        inputList[i, j].max() - inputList[i, j].min()
+                    inputList[i, j].max() - inputList[i, j].min()
                 )
         return inputList
 
