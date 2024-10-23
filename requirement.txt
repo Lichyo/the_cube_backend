@@ -1,6 +1,0 @@
-Flask==3.0.3
-flask-socketio==5.3.6
-Pillow==10.4.0
-numpy==1.26.4
-mediapipe==0.10.14
-keras==3.4.1

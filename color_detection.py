@@ -36,7 +36,7 @@ def get_classifier(user):
     x_train = sc_x.fit_transform(x_train)
     classifier = SVC(kernel='rbf')
     classifier.fit(x_train, y_train)
-    print(f"Accuracy: {accuracy_score(y_test, classifier.predict(sc_x.transform(x_test)))}")
+    # print(f"Accuracy: {accuracy_score(y_test, classifier.predict(sc_x.transform(x_test)))}")
     return classifier, sc_x
 
 
@@ -58,7 +58,7 @@ def init_color_dataset(user, color, image, section_width, scan_area):
     new_df = pd.DataFrame(colors, columns=['R', 'G', 'B', 'Color'])
     updated_df = pd.concat([existing_df, new_df], ignore_index=True)
     updated_df.to_csv(file_path, index=False)
-    print(f"Dataset for {user} has been updated")
+    # print(f"Dataset for {user} has been updated")
 
 
 def clear_color_dataset(user):
@@ -67,7 +67,7 @@ def clear_color_dataset(user):
         existing_df = pd.read_csv(file_path)
         existing_df.drop(existing_df.index, inplace=True)
         existing_df.to_csv(file_path, index=False)
-        print(f"Dataset for {user} has been cleared")
+        # print(f"Dataset for {user} has been cleared")
     except FileNotFoundError:
         print(f"Dataset for {user} is empty")
 
