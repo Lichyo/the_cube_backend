@@ -3,7 +3,6 @@ from flask_socketio import SocketIO
 import base64
 from io import BytesIO
 from PIL import Image
-from PIL import ImageOps
 import color_detection as cd
 from pack_for_chiyu import the_ultimate_function
 import time
@@ -28,7 +27,7 @@ def rotation(image):
         predictedResult, probabilities = the_ultimate_function.picture_in_result_out(
             image
         )
-        print("predictedResult: ", predictedResult, "probabilities: ", probabilities)
+        # print("predictedResult: ", predictedResult, "probabilities: ", probabilities)
         socketio.emit("rotation", predictedResult)
 
     except Exception as e:
@@ -66,13 +65,13 @@ def handle_save_image(image):
 def handle_initialize_cube_color():
     try:
         image = Image.open(image_path)
-        start_time = time.time()
+        # start_time = time.time()
 
         records = cd.predict_color(image, section_width, scan_area, user)
-        end_time = time.time()
+        # end_time = time.time()
 
-        execution_time = end_time - start_time
-        print(f"Function execution time: {execution_time} seconds")
+        # execution_time = end_time - start_time
+        # print(f"Function execution time: {execution_time} seconds")
         socketio.emit("return_cube_color", records)
     except Exception as e:
         print(f"Error: {e}")
