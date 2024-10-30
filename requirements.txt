@@ -1,0 +1,10 @@
+Flask
+opencv-python-headless
+numpy
+scikit-learn
+pandas
+Flask-SocketIO
+pillow
+mediapipe
+keras
+tensorflow
