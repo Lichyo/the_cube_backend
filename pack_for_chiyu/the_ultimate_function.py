@@ -1,4 +1,4 @@
-import where_the_magic_happened
+from pack_for_chiyu import where_the_magic_happened
 
 
 def picture_in_result_out(RGBImage):

@@ -1,7 +1,7 @@
-import tools.data_organizer as do
+from pack_for_chiyu import data_organizer as do
 import mediapipe as mp
 import keras
-import tools.recorder as rd
+from pack_for_chiyu import recorder as rd
 import numpy as np
 import time
 
@@ -12,14 +12,15 @@ organizer = do.DataOrganizer()
 recorder = rd.Recorder()
 organizer = do.DataOrganizer()
 timeSteps = 21
-features = 60
+# features = 60
+features =36
 
 mpDrawing = mp.solutions.drawing_utils  # 繪圖方法
 mpDrawingStyles = mp.solutions.drawing_styles  # 繪圖樣式
 mpHandsSolution = mp.solutions.hands  # 偵測手掌方法
 
 lstmModel = keras.models.load_model(
-    "the_precious_working_model/lstm_2hand_noCTC_60Features.keras",
+    "pack_for_chiyu/lstm_2hand_shirnk_model.keras",
 )
 showResult = "wait"
 predictFrequence = 1
@@ -30,23 +31,18 @@ hands = mpHandsSolution.Hands(
     min_detection_confidence=0.5,
     min_tracking_confidence=0.5,
 )
-lastResult = 13
+
 resultsList = [
-    "B'",
-    "B ",
-    "D'",
-    "D ",
-    "F ",
-    "F'",
-    "L'",
-    "L ",
     "R ",
     "R'",
-    "U'",
-    "U ",
     "Stop",
     "wait",
 ]
+# stopCode = 12
+# waitCode = 13
+stopCode = resultsList.index("Stop")
+waitCode = resultsList.index("wait")
+lastResult = waitCode
 # currentFeature = []  # 目前畫面的資料
 continuousFeature = []  # 目前抓到的前面
 missCounter = 0
@@ -157,7 +153,8 @@ def predict(continuousFeature):
     continuousFeature = np.array(continuousFeature)
     predictData = np.expand_dims(continuousFeature, axis=0)  # (1, timeSteps, features)
     # 進行預測
-    predictData = organizer.preprocessingData(predictData)
+    # predictData = organizer.preprocessingData(predictData)
+    predictData = organizer.preprocessingForShirnkModel(predictData)
 
     prediction = lstmModel.predict(predictData, verbose=0)  # error
     predictedResult = np.argmax(prediction, axis=1)[0]
@@ -167,13 +164,13 @@ def predict(continuousFeature):
 
 def blockIllegalResult(probabilities, lastResult, currentResult):
     if probabilities > 0.7:
-        if currentResult in [12, 13]:  # stop, wait 不動
+        if currentResult in [stopCode, waitCode]:  # stop, wait 不動
             return currentResult
 
         if currentResult == lastResult:  # block same move
-            return 13  # wait
+            return waitCode  # wait
 
-        if lastResult != 12 and (lastResult // 2) == (
+        if lastResult != stopCode and (lastResult // 2) == (
             currentResult // 2
         ):  # block reverse move
             return lastResult
@@ -220,7 +217,7 @@ def combineAndPredict(currentFeature):
                 continuousFeature = []
                 return predictedResult, probabilities
 
-    return 13, 0
+    return waitCode, 0
 
 
 def imageHandPosePredict(RGBImage):  # 重構判斷式
@@ -239,13 +236,14 @@ def imageHandPosePredict(RGBImage):  # 重構判斷式
         imageHandPosePredict.startTime = 0  # 用於計算免檢查通行次數
 
     results = hands.process(RGBImage)  # 偵測手掌
-    predictedResult = 13
+    predictedResult = waitCode
     probabilities = 0
 
     if isBothExist(results):  # 如果有雙手
         imageHandPosePredict.missCounter = 0
         currentFeature = recorder.record2HandPerFrame(results)
         currentTime = time.time()
+
         if imageHandPosePredict.handMovingPassCount == 0:
             if isHandMoving(results, currentFeature):
                 imageHandPosePredict.startTime = time.time()
@@ -258,13 +256,12 @@ def imageHandPosePredict(RGBImage):  # 重構判斷式
             else:
                 continuousFeature = []
                 pass
-        else:
-            imageHandPosePredict.handMovingPassCount -= 1
+
 
         if (
             len(currentFeature) == 84 and imageHandPosePredict.handMovingPassCount > 0
         ):  # 確認為特徵的數量
-            if (currentTime - imageHandPosePredict.startTime) > 3 and len(
+            if (currentTime - imageHandPosePredict.startTime) > 2 and len(
                 continuousFeature
             ) > 3:
                 continuousFeature = linear_interpolation(
@@ -274,8 +271,10 @@ def imageHandPosePredict(RGBImage):  # 重構判斷式
             predictedResult = blockIllegalResult(
                 probabilities, lastResult, predictedResult
             )
-            if predictedResult not in [12, 13]:
+            if predictedResult not in [stopCode, waitCode]:
                 resultString = resultsList[predictedResult]
+                # print(resultString)
+            imageHandPosePredict.handMovingPassCount = imageHandPosePredict.handMovingPassCount - 1
             #     print(resultsList[predictedResult])
             # # if not predictedResult == 13:
             # #     print(resultsList[predictedResult])
