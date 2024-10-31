@@ -76,6 +76,12 @@ class DataOrganizer:
                 )
         return inputList
 
+    def normalizedOneDimensionList(self, inputList):
+        npInputList = np.array(inputList)
+        normalizedList = (npInputList - npInputList.min()) / (npInputList.max() - npInputList.min())
+        normalizedList= normalizedList.tolist()
+        return normalizedList
+
     def getRelativeWithFirstTimeStep(self, npArray):
         for i in range(len(npArray)):
             originX = npArray[i][0][0]

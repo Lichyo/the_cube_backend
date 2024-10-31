@@ -21,7 +21,7 @@ def predict_color(image, section_width, scan_area, user):
         source = sc_x.transform(source)
         color = classifier.predict(source)
         records.append(f"{color[0]}")
-    print(records)
+    # print(records)
     return records
 
 

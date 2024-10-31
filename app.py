@@ -90,7 +90,7 @@ def init_color_dataset(color):
 
 @socketio.on("connect")
 def handle_connect():
-    print("Client connected")
+    return "Connected"
 
 
 @socketio.on("join")
@@ -108,7 +108,7 @@ def handle_clear_color_dataset():
 
 @socketio.on("disconnect")
 def handle_disconnect():
-    print("Client disconnected")
+    return "Disconnected"
 
 
 if __name__ == "__main__":
