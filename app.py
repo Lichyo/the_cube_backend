@@ -3,10 +3,16 @@ from flask_socketio import SocketIO
 import base64
 from io import BytesIO
 from PIL import Image
+from PIL import ImageOps
 import color_detection as cd
 from pack_for_chiyu import the_ultimate_function
 import time
 import numpy as np
+import pack_for_chiyu.data_organizer as do
+import pack_for_chiyu.recorder as rd
+import mediapipe as mp
+import keras
+
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret!"
@@ -22,14 +28,15 @@ center_points = ()
 def rotation(image):
     try:
         image = Image.open(BytesIO(base64.b64decode(image)))
-        # image = ImageOps.mirror(image)  # Flip the image horizontally
+        image = ImageOps.mirror(image)
         image = np.array(image)
         predictedResult, probabilities = the_ultimate_function.picture_in_result_out(
             image
         )
-        # print("predictedResult: ", predictedResult, "probabilities: ", probabilities)
-        socketio.emit("rotation", predictedResult)
-
+        # if not predictedResult == "wait":
+        print("predictedResult: ", predictedResult, "probabilities: ", probabilities)
+        result = {"predictedResult": predictedResult, "probabilities": probabilities}
+        socketio.emit("rotation", result)
     except Exception as e:
         print(f"Error: {e}")
 
@@ -112,4 +119,4 @@ def handle_disconnect():
 
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=5000, allow_unsafe_werkzeug=True)
+    socketio.run(app, host="0.0.0.0", port=5001, allow_unsafe_werkzeug=True)
