@@ -28,15 +28,15 @@ center_points = ()
 def rotation(image):
     try:
         image = Image.open(BytesIO(base64.b64decode(image)))
-        image = ImageOps.mirror(image)  # Flip the image horizontally
+        image = ImageOps.mirror(image)
         image = np.array(image)
         predictedResult, probabilities = the_ultimate_function.picture_in_result_out(
             image
         )
-        if not predictedResult == "wait":
-            print("predictedResult: ", predictedResult, "probabilities: ", probabilities)
-            result = {"predictedResult": predictedResult, "probabilities": probabilities}
-            socketio.emit("rotation", result)
+        # if not predictedResult == "wait":
+        print("predictedResult: ", predictedResult, "probabilities: ", probabilities)
+        result = {"predictedResult": predictedResult, "probabilities": probabilities}
+        socketio.emit("rotation", result)
     except Exception as e:
         print(f"Error: {e}")
 
@@ -72,13 +72,13 @@ def handle_save_image(image):
 def handle_initialize_cube_color():
     try:
         image = Image.open(image_path)
-        start_time = time.time()
+        # start_time = time.time()
 
         records = cd.predict_color(image, section_width, scan_area, user)
-        end_time = time.time()
+        # end_time = time.time()
 
-        execution_time = end_time - start_time
-        print(f"Function execution time: {execution_time} seconds")
+        # execution_time = end_time - start_time
+        # print(f"Function execution time: {execution_time} seconds")
         socketio.emit("return_cube_color", records)
     except Exception as e:
         print(f"Error: {e}")
@@ -119,4 +119,4 @@ def handle_disconnect():
 
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=5000, allow_unsafe_werkzeug=True)
+    socketio.run(app, host="0.0.0.0", port=5001, allow_unsafe_werkzeug=True)
